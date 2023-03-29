@@ -4,4 +4,4 @@
 
 ### FileGround Backend Welcome Page
 
-tech stack: django, python
+tech stack: fastApi, python
