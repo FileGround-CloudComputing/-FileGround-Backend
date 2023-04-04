@@ -68,6 +68,3 @@ async def signup(nickname: str, password: str, access_token: str = Depends(oauth
     # 생성된 계정 정보를 데이터베이스에 저장
 
     return {"message": "User signed up successfully"}
-
-
-async def read_users_me(current_user: int = Depends())
