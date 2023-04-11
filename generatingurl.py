@@ -11,7 +11,7 @@ async def hello():
 
 @app.post("/ground/:gid/photo")
 async def generate_upload_signed_url(file_name):
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="config/serviceAccountKey.json" # 서비스 키 값
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="service-key-path.json" # 서비스 키 값
     
     storage_client = storage.Client()
     bucket = storage_client.bucket('your-bucket-name') #bucket name
@@ -28,7 +28,7 @@ async def generate_upload_signed_url(file_name):
 
 @app.get("/ground/:gid/photo")
 async def generate_download_signed_url(file_name):
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="config/serviceAccountKey.json" # 서비스 키 값
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="service-key-path.json" # 서비스 키 값
     storage_client = storage.Client()
     bucket = storage_client.bucket('your-bucket-name') #bucket name
     blob = bucket.blob(file_name)
