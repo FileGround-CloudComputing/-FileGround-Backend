@@ -4,9 +4,18 @@ from typing import Dict
 
 from fastapi import HTTPException
 from fastapi import status
+from fastapi import Depends
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 import requests
+from jose import jwt, JWTError
+from datetime import datetime, timedelta
 
 from config import settings
+# from passlib.context import CryptContext
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/access")
+
+# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class LoginService:
@@ -49,4 +58,28 @@ class LoginService:
         return query_string[:-1]
 
 
+class TestLoginService:
+
+    # 사용자 인증 함수
+    def authenticate_user(username: str, password: str):
+        user = get_user(username)
+        if not user:
+            return False
+        if not verify_password(password, user["hashed_password"]):
+            return False
+        return user
+
+    # JWT 토큰 생성 함수
+    def create_access_token(data: dict, expires_delta: timedelta = None):
+        to_encode = data.copy()
+        if expires_delta:
+            expire = datetime.utcnow() + expires_delta
+        else:
+            expire = datetime.utcnow() + timedelta(minutes=15)
+        to_encode.update({"exp": expire})
+        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        return encoded_jwt
+
+
 login_service = LoginService()
+test_login_service = TestLoginService()
