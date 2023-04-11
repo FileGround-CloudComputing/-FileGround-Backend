@@ -11,10 +11,16 @@ from fastapi import Response
 from fastapi import status
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
-from datetime import timedelta
+from fastapi.responses import JSONResponse
+from fastapi_jwt_auth import AuthJWT
+from fastapi_jwt_auth.exceptions import AuthJWTException
+from datetime import timedelta, datetime
+from pydantic import BaseModel
+
 
 from services import login_service
 from services import test_login_service
+
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 
@@ -29,8 +35,17 @@ firebase_admin.initialize_app(cred,
 dbs = firestore.client()
 
 
+class Settings(BaseModel):
+    authjwt_secret_key: str = "secret"
+
+
+@AuthJWT.load_config
+def get_config():
+    return Settings()
+
+
 @router.get("/naver/login")
-async def naver_login(request: Request):
+async def naver_login(request: Request, Authorize: AuthJWT = Depends()):
     redirect_uri = request.url_for("naver_callback")
     print('redirect_uri:', redirect_uri)
     naver_login_url = login_service.get_naver_login_url(redirect_uri)
@@ -38,7 +53,7 @@ async def naver_login(request: Request):
 
 
 @router.get("/naver/callback")
-async def naver_callback(request: Request, response: Response, code: str = None, state: str = None):
+async def naver_callback(request: Request, response: Response, code: str = None, state: str = None, Authorize: AuthJWT = Depends()):
     if code is None or state is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Missing code or state parameter")
@@ -48,18 +63,13 @@ async def naver_callback(request: Request, response: Response, code: str = None,
     # return {"access_token": login_token["access_token"]}
 
 
-@router.get("/auth/refresh")
-async def auth_refresh(request: Request):
-    return HTMLResponse()
-
-
 @router.get("/")
-async def root():
+async def root(Authorize: AuthJWT = Depends()):
     return {"message": "Hello World oh yeah sumin is legend"}
 
 
 @router.post("/users")
-async def create_user(user: dict):
+async def create_user(user: dict, Authorize: AuthJWT = Depends()):
     # Add new user to Realtime Database Firebase
     ref = db.reference("/users/" + user["id"])
     ref.push().set(user)
@@ -71,7 +81,7 @@ async def create_user(user: dict):
 
 
 @router.get("/users")
-async def get_users(user_id: str):
+async def get_users(user_id: str, Authorize: AuthJWT = Depends()):
     # Retrieve user from RealtimeDatabase
     ref = db.reference("/users")
     user_info = ref.get()
@@ -84,7 +94,7 @@ async def get_users(user_id: str):
 
 
 @router.get("/users/{user_id}")
-async def get_user(user_id: str):
+async def get_user(user_id: str, Authorize: AuthJWT = Depends()):
     # Retrieve user from RealtimeDatabase
     ref = db.reference("/users/" + user_id)
     user_info = ref.get()
@@ -104,7 +114,7 @@ async def get_user(user_id: str):
 
 
 @router.post("/photos")
-async def upload_photo(photo: dict):
+async def upload_photo(photo: dict, Authorize: AuthJWT = Depends()):
     # Add new photo to Realtime Database Firebase
     ref = db.reference("/photos/" + photo["id"])
     ref.push().set(photo)
@@ -116,7 +126,7 @@ async def upload_photo(photo: dict):
 
 
 @router.get("/photos/{photo_id}")
-async def get_photo(photo_id: str):
+async def get_photo(photo_id: str, Authorize: AuthJWT = Depends()):
     # Retrieve user from RealtimeDatabase
     ref = db.reference("/photos/" + photo_id)
     photo_info = ref.get()
@@ -136,7 +146,7 @@ async def get_photo(photo_id: str):
 
 
 @router.post("/ground")
-async def create_ground(ground: dict):
+async def create_ground(ground: dict, Authorize: AuthJWT = Depends()):
     # Add new user to Realtime Database Firebase
     while (True):
         random_num = random.randint(100000, 999999)
@@ -164,7 +174,7 @@ async def create_ground(ground: dict):
 
 
 @router.get("/ground/{ground_id}")
-async def get_ground(ground_id: str):
+async def get_ground(ground_id: str, Authorize: AuthJWT = Depends()):
     # Retrieve user from RealtimeDatabase
     ref = db.reference("/ground/" + ground_id)
     ground_info = ref.get()
@@ -175,27 +185,24 @@ async def get_ground(ground_id: str):
 
 
 @router.post("/auth/access")
-async def renew_access_token():
-    bluejoy = {
-        "id": "123",
-        "username": "bluejoy"
+async def renew_access_token(Authorize: AuthJWT = Depends()):
+    Authorize.jwt_refresh_token_required()
+    current_user = Authorize.get_jwt_subject()
+    new_access_token = Authorize.create_access_token(subject=current_user)
+    return {
+        "accessToken": new_access_token,
+        "accessTokenExpiresIn": datetime.today().isoformat()
     }
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = test_login_service.create_access_token(
-        data={"sub": bluejoy}, expires_delta=access_token_expires
-    )
-
-    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.post("/auth/refresh")
-async def renew_refresh_token():
-    bluejoy = {
-        "id": "123",
-        "username": "bluejoy"
+async def renew_refresh_token(Authorize: AuthJWT = Depends()):
+    access_token = Authorize.create_access_token(subject=1111)
+    refresh_token = Authorize.create_refresh_token(subject=1111)
+    return {
+        "accessToken": access_token,
+        "refresh_token": refresh_token,
+        "accessTokenExpiresIn": datetime.today().isoformat(),
+        "refreshTokenExpiresIn": datetime.today().isoformat()
+
     }
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    refresh_token = test_login_service.create_access_token(
-        data={"sub": bluejoy}, expires_delta=access_token_expires * 2
-    )
-    return {"refresh_token": refresh_token}
