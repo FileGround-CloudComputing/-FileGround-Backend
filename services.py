@@ -17,6 +17,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/access")
 
 # pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+SECRET_KEY = "my_secret_key"
+
 
 class LoginService:
     def get_naver_login_url(self, redirect_uri: str) -> str:
@@ -71,14 +73,17 @@ class TestLoginService:
 
     # JWT 토큰 생성 함수
     def create_access_token(data: dict, expires_delta: timedelta = None):
-        to_encode = data.copy()
-        if expires_delta:
-            expire = datetime.utcnow() + expires_delta
-        else:
-            expire = datetime.utcnow() + timedelta(minutes=15)
-        to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-        return encoded_jwt
+        try:
+            to_encode = data.copy()
+            if expires_delta:
+                expire = datetime.utcnow() + expires_delta
+            else:
+                expire = datetime.utcnow() + timedelta(minutes=15)
+            to_encode.update({"exp": expire})
+            encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm='HS256')
+            return encoded_jwt
+        except Exception as e:
+            print('에러발생', e)
 
 
 login_service = LoginService()
