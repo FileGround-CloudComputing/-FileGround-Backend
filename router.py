@@ -16,9 +16,10 @@ from services import login_service
 
 router = APIRouter()
 
-cred = credentials.Certificate("file-ground-firebase-adminsdk-k8zwz-2dbb250413.json")
+cred = credentials.Certificate(
+    "file-ground-firebase-adminsdk-k8zwz-2dbb250413.json")
 firebase_admin.initialize_app(cred,
-                              {'databaseURL':'https://file-ground-default-rtdb.asia-southeast1.firebasedatabase.app//'})
+                              {'databaseURL': 'https://file-ground-default-rtdb.asia-southeast1.firebasedatabase.app//'})
 
 # Get Firestore client
 dbs = firestore.client()
@@ -47,6 +48,7 @@ async def naver_callback(request: Request, response: Response, code: str = None,
 async def auth_refresh(request: Request):
     return HTMLResponse()
 
+
 @router.get("/")
 async def root():
     return {"message": "Hello World oh yeah sumin is legend"}
@@ -54,7 +56,7 @@ async def root():
 
 @router.post("/users")
 async def create_user(user: dict):
-    #Add new user to Realtime Database Firebase
+    # Add new user to Realtime Database Firebase
     ref = db.reference("/users/" + user["id"])
     ref.push().set(user)
     # Add new user document to Firestore
@@ -63,9 +65,10 @@ async def create_user(user: dict):
 
     return {"message": "User created successfully"}
 
+
 @router.get("/users")
 async def get_users(user_id: str):
-    #Retrieve user from RealtimeDatabase
+    # Retrieve user from RealtimeDatabase
     ref = db.reference("/users")
     user_info = ref.get()
     return_dict = {}
@@ -78,7 +81,7 @@ async def get_users(user_id: str):
 
 @router.get("/users/{user_id}")
 async def get_user(user_id: str):
-    #Retrieve user from RealtimeDatabase
+    # Retrieve user from RealtimeDatabase
     ref = db.reference("/users/" + user_id)
     user_info = ref.get()
     return_dict = {}
@@ -94,10 +97,11 @@ async def get_user(user_id: str):
         return doc.to_dict()
     else:
         return {"message": "User not found"}
-    
+
+
 @router.post("/photos")
 async def upload_photo(photo: dict):
-    #Add new photo to Realtime Database Firebase
+    # Add new photo to Realtime Database Firebase
     ref = db.reference("/photos/" + photo["id"])
     ref.push().set(photo)
     # Add new photo document to Firestore
@@ -106,9 +110,10 @@ async def upload_photo(photo: dict):
 
     return {"message": "Photo created successfully"}
 
+
 @router.get("/photos/{photo_id}")
 async def get_photo(photo_id: str):
-    #Retrieve user from RealtimeDatabase
+    # Retrieve user from RealtimeDatabase
     ref = db.reference("/photos/" + photo_id)
     photo_info = ref.get()
     return_dict = {}
@@ -124,11 +129,12 @@ async def get_photo(photo_id: str):
         return doc.to_dict()
     else:
         return {"message": "User not found"}
-    
+
+
 @router.post("/ground")
 async def create_ground(ground: dict):
-    #Add new user to Realtime Database Firebase
-    while(True):
+    # Add new user to Realtime Database Firebase
+    while (True):
         random_num = random.randint(100000, 999999)
         id = random_num
         ref = db.reference("/ground/")
@@ -137,7 +143,7 @@ async def create_ground(ground: dict):
         if ground_info == "'None'":
             ground["id"] = str(id)
             break
-        
+
         bool = False
         for key, value in ground_info.items():
             if value["id"] == id:
@@ -146,15 +152,16 @@ async def create_ground(ground: dict):
             print(id)
             ground["id"] = str(id)
             break
-    
+
     ref = db.reference("/ground/" + str(ground["id"]))
     ref.set(ground)
 
     return {"message": "User created successfully"}
 
+
 @router.get("/ground/{ground_id}")
 async def get_ground(ground_id: str):
-    #Retrieve user from RealtimeDatabase
+    # Retrieve user from RealtimeDatabase
     ref = db.reference("/ground/" + ground_id)
     ground_info = ref.get()
     return_dict = {}
