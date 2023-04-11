@@ -201,7 +201,7 @@ async def renew_refresh_token(Authorize: AuthJWT = Depends()):
     refresh_token = Authorize.create_refresh_token(subject=1111)
     return {
         "accessToken": access_token,
-        "refresh_token": refresh_token,
+        "refreshToken": refresh_token,
         "accessTokenExpiresIn": datetime.today().isoformat(),
         "refreshTokenExpiresIn": datetime.today().isoformat()
 
