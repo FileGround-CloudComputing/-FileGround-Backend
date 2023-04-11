@@ -1,9 +1,10 @@
 # views.py
+import random
+import json
+from datetime import timedelta, datetime
 import firebase_admin
 from firebase_admin import credentials, firestore, db
 from fastapi import FastAPI
-import json
-import random
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Request
@@ -14,7 +15,6 @@ from fastapi.responses import HTMLResponse
 from fastapi.responses import JSONResponse
 from fastapi_jwt_auth import AuthJWT
 from fastapi_jwt_auth.exceptions import AuthJWTException
-from datetime import timedelta, datetime
 from pydantic import BaseModel
 
 
@@ -29,7 +29,8 @@ router = APIRouter()
 cred = credentials.Certificate(
     "serviceAccountKey.json")
 firebase_admin.initialize_app(cred,
-                              {'databaseURL': 'https://file-ground-default-rtdb.asia-southeast1.firebasedatabase.app//'})
+                              {'databaseURL': 'https://file-ground-default-rtdb.asia-southeast1.firebasedatabase.app'}
+                              )
 
 # Get Firestore client
 dbs = firestore.client()
@@ -188,6 +189,7 @@ async def get_ground(ground_id: str, Authorize: AuthJWT = Depends()):
 async def renew_access_token(Authorize: AuthJWT = Depends()):
     Authorize.jwt_refresh_token_required()
     current_user = Authorize.get_jwt_subject()
+    print('current_user:', db.reference('/uers').get(current_user))
     new_access_token = Authorize.create_access_token(subject=current_user)
     return {
         "accessToken": new_access_token,
@@ -197,8 +199,17 @@ async def renew_access_token(Authorize: AuthJWT = Depends()):
 
 @router.post("/auth/refresh")
 async def renew_refresh_token(Authorize: AuthJWT = Depends()):
-    access_token = Authorize.create_access_token(subject=1111)
-    refresh_token = Authorize.create_refresh_token(subject=1111)
+    current_user = Authorize.get_jwt_subject()
+    if current_user is None:
+        print("기본 유저인 박선우로 세팅합니다")
+        return {
+            "accessToken": Authorize.create_access_token(subject="63d52530-d872-11ed-8a0c-00155d2526d3"),
+            "refreshToken": Authorize.create_refresh_token(subject="63d52530-d872-11ed-8a0c-00155d2526d3"),
+            "accessTokenExpiresIn": datetime.today().isoformat(),
+            "refreshTokenExpiresIn": datetime.today().isoformat()
+        }
+    access_token = Authorize.create_access_token(subject=current_user)
+    refresh_token = Authorize.create_refresh_token(subject=current_user)
     return {
         "accessToken": access_token,
         "refreshToken": refresh_token,
