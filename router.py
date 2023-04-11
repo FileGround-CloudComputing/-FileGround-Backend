@@ -1,9 +1,10 @@
 # views.py
+import random
+import json
+from datetime import timedelta, datetime
 import firebase_admin
 from firebase_admin import credentials, firestore, db
 from fastapi import FastAPI
-import json
-import random
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Request
@@ -14,7 +15,6 @@ from fastapi.responses import HTMLResponse
 from fastapi.responses import JSONResponse
 from fastapi_jwt_auth import AuthJWT
 from fastapi_jwt_auth.exceptions import AuthJWTException
-from datetime import timedelta, datetime
 from pydantic import BaseModel
 
 
