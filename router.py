@@ -11,13 +11,17 @@ from fastapi import Response
 from fastapi import status
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
+from datetime import timedelta
 
 from services import login_service
+from services import test_login_service
+
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 
 router = APIRouter()
 
 cred = credentials.Certificate(
-    "file-ground-firebase-adminsdk-k8zwz-2dbb250413.json")
+    "serviceAccountKey.json")
 firebase_admin.initialize_app(cred,
                               {'databaseURL': 'https://file-ground-default-rtdb.asia-southeast1.firebasedatabase.app//'})
 
@@ -168,3 +172,30 @@ async def get_ground(ground_id: str):
     for key, value in ground_info.items():
         return_dict[key] = value
     return return_dict
+
+
+@router.post("/auth/access")
+async def renew_access_token():
+    bluejoy = {
+        "id": "123",
+        "username": "bluejoy"
+    }
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = test_login_service.create_access_token(
+        data={"sub": bluejoy}, expires_delta=access_token_expires
+    )
+
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/auth/refresh")
+async def renew_refresh_token():
+    bluejoy = {
+        "id": "123",
+        "username": "bluejoy"
+    }
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    refresh_token = test_login_service.create_access_token(
+        data={"sub": bluejoy}, expires_delta=access_token_expires * 2
+    )
+    return {"refresh_token": refresh_token}
