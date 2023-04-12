@@ -120,7 +120,7 @@ async def upload_photo(photo: dict, Authorize: AuthJWT = Depends()):
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="serviceAccountKey.json" # service account key path
     storage_client = storage.Client()
     bucket = storage_client.bucket('your-bucket-name') #bucket name
-    blob = bucket.blob(dict.get('photo_name'))
+    blob = bucket.blob(photo["name"])
 
     url = blob.generate_signed_url(
         version="v4",        
@@ -153,7 +153,7 @@ async def get_photo(photo_id: str, Authorize: AuthJWT = Depends()):
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="service-key-path.json" # 서비스 키 값
     storage_client = storage.Client()
     bucket = storage_client.bucket('your-bucket-name') #bucket name
-    blob = bucket.blob(doc.get('photo_name'))
+    blob = bucket.blob(doc_ref.get('photo_name'))
 
     url = blob.generate_signed_url(
         version="v4",
