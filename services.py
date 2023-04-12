@@ -63,7 +63,7 @@ class LoginService:
 class TestLoginService:
 
     # 사용자 인증 함수
-    def authenticate_user(username: str, password: str):
+    def authenticate_user(self, username: str, password: str):
         user = get_user(username)
         if not user:
             return False
@@ -72,7 +72,7 @@ class TestLoginService:
         return user
 
     # JWT 토큰 생성 함수
-    def create_access_token(data: dict, expires_delta: timedelta = None):
+    def create_access_token(self, data: dict, expires_delta: timedelta = None):
         try:
             to_encode = data.copy()
             if expires_delta:
