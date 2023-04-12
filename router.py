@@ -116,6 +116,18 @@ async def get_user(user_id: str, Authorize: AuthJWT = Depends()):
 
 @router.post("/photos")
 async def upload_photo(photo: dict, Authorize: AuthJWT = Depends()):
+    # firebase storage connect
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="serviceAccountKey.json" # service account key path
+    storage_client = storage.Client()
+    bucket = storage_client.bucket('your-bucket-name') #bucket name
+    blob = bucket.blob(photo["title"])
+
+    url = blob.generate_signed_url(
+        version="v4",        
+        expiration=datetime.timedelta(minutes=30), # This URL is valid for 30 minutes
+        method="PUT", # Allow PUT requests using this URL.
+    )
+
     # Add new photo to Realtime Database Firebase
     ref = db.reference("/photos/" + photo["id"])
     ref.push().set(photo)
@@ -123,7 +135,7 @@ async def upload_photo(photo: dict, Authorize: AuthJWT = Depends()):
     doc_ref = dbs.collection(u'photos').document(photo["id"])
     doc_ref.set(photo)
 
-    return {"message": "Photo created successfully"}
+    return url
 
 
 @router.get("/photos/{photo_id}")
@@ -137,13 +149,21 @@ async def get_photo(photo_id: str, Authorize: AuthJWT = Depends()):
     # Retrieve user document from Firestore
     doc_ref = dbs.collection(u'photos').document(photo_id)
     doc = doc_ref.get()
+    
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="service-key-path.json" # 서비스 키 값
+    storage_client = storage.Client()
+    bucket = storage_client.bucket('your-bucket-name') #bucket name
+    blob = bucket.blob(doc_ref.get('photo_name'))
 
-    return return_dict.items()
+    url = blob.generate_signed_url(
+        version="v4",
+        # This URL is valid for 15 minutes
+        expiration=datetime.timedelta(minutes=15),
+        # Allow GET requests using this URL.
+        method="GET",
+    )
 
-    if doc.exists:
-        return doc.to_dict()
-    else:
-        return {"message": "User not found"}
+    return url
 
 
 @router.post("/ground")
