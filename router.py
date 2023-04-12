@@ -115,6 +115,18 @@ async def get_user(user_id: str, Authorize: AuthJWT = Depends()):
 
 @router.post("/photos")
 async def upload_photo(photo: dict, Authorize: AuthJWT = Depends()):
+    # firebase storage connect
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="serviceAccountKey.json" # service account key path
+    storage_client = storage.Client()
+    bucket = storage_client.bucket('new-tori-bucket') #bucket name
+    blob = bucket.blob(dict.title())
+
+    url = blob.generate_signed_url(
+        version="v4",        
+        expiration=datetime.timedelta(minutes=30), # This URL is valid for 30 minutes
+        method="PUT", # Allow PUT requests using this URL.
+    )
+
     # Add new photo to Realtime Database Firebase
     ref = db.reference("/photos/" + photo["id"])
     ref.push().set(photo)
@@ -122,7 +134,7 @@ async def upload_photo(photo: dict, Authorize: AuthJWT = Depends()):
     doc_ref = dbs.collection(u'photos').document(photo["id"])
     doc_ref.set(photo)
 
-    return {"message": "Photo created successfully"}
+    return url
 
 
 @router.get("/photos/{photo_id}")
