@@ -118,8 +118,8 @@ async def upload_photo(photo: dict, Authorize: AuthJWT = Depends()):
     # firebase storage connect
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="serviceAccountKey.json" # service account key path
     storage_client = storage.Client()
-    bucket = storage_client.bucket('new-tori-bucket') #bucket name
-    blob = bucket.blob(dict.title())
+    bucket = storage_client.bucket('your-bucket-name') #bucket name
+    blob = bucket.blob(dict.get('photo_name'))
 
     url = blob.generate_signed_url(
         version="v4",        
@@ -148,13 +148,21 @@ async def get_photo(photo_id: str, Authorize: AuthJWT = Depends()):
     # Retrieve user document from Firestore
     doc_ref = dbs.collection(u'photos').document(photo_id)
     doc = doc_ref.get()
+    
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="service-key-path.json" # 서비스 키 값
+    storage_client = storage.Client()
+    bucket = storage_client.bucket('your-bucket-name') #bucket name
+    blob = bucket.blob(doc.get('photo_name'))
 
-    return return_dict.items()
+    url = blob.generate_signed_url(
+        version="v4",
+        # This URL is valid for 15 minutes
+        expiration=datetime.timedelta(minutes=15),
+        # Allow GET requests using this URL.
+        method="GET",
+    )
 
-    if doc.exists:
-        return doc.to_dict()
-    else:
-        return {"message": "User not found"}
+    return url
 
 
 @router.post("/ground")
