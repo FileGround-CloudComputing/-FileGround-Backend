@@ -11,12 +11,13 @@ from fastapi import Response
 from fastapi import status
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
+import uuid
 
 from services import login_service
 
 router = APIRouter()
 
-cred = credentials.Certificate("file-ground-firebase-adminsdk-k8zwz-2dbb250413.json")
+cred = credentials.Certificate("/app/gcp.json")
 firebase_admin.initialize_app(cred,
                               {'databaseURL':'https://file-ground-default-rtdb.asia-southeast1.firebasedatabase.app//'})
 
@@ -54,27 +55,13 @@ async def root():
 
 @router.post("/users")
 async def create_user(user: dict):
+    id = uuid.uuid1()
+    print(id)
+    user["id"] = str(id)
     #Add new user to Realtime Database Firebase
     ref = db.reference("/users/" + user["id"])
-    ref.push().set(user)
-    # Add new user document to Firestore
-    doc_ref = dbs.collection(u'users').document(user["id"])
-    doc_ref.set(user)
-
+    ref.set(user)
     return {"message": "User created successfully"}
-
-@router.get("/users")
-async def get_users(user_id: str):
-    #Retrieve user from RealtimeDatabase
-    ref = db.reference("/users")
-    user_info = ref.get()
-    return_dict = {}
-    for key, value in user_info.items():
-        return_dict[key] = value
-    # Retrieve user document from Firestore
-    doc_ref = dbs.collection(u'users').document(user_id)
-    doc = doc_ref.get()
-
 
 @router.get("/users/{user_id}")
 async def get_user(user_id: str):
@@ -84,25 +71,28 @@ async def get_user(user_id: str):
     return_dict = {}
     for key, value in user_info.items():
         return_dict[key] = value
-    # Retrieve user document from Firestore
-    doc_ref = dbs.collection(u'users').document(user_id)
-    doc = doc_ref.get()
+
+    return return_dict.items()
+    
+@router.get("/users")
+async def get_users():
+    #Retrieve user from RealtimeDatabase
+    ref = db.reference("/users/")
+    user_info = ref.get()
+    return_dict = {}
+    for key, value in user_info.items():
+        return_dict[key] = value
 
     return return_dict.items()
 
-    if doc.exists:
-        return doc.to_dict()
-    else:
-        return {"message": "User not found"}
-    
 @router.post("/photos")
 async def upload_photo(photo: dict):
     #Add new photo to Realtime Database Firebase
+    photo_id = uuid.uuid1()
+    print(photo_id)
+    photo["id"] = str(photo_id)
     ref = db.reference("/photos/" + photo["id"])
-    ref.push().set(photo)
-    # Add new photo document to Firestore
-    doc_ref = dbs.collection(u'photos').document(photo["id"])
-    doc_ref.set(photo)
+    ref.set(photo)
 
     return {"message": "Photo created successfully"}
 
@@ -114,16 +104,9 @@ async def get_photo(photo_id: str):
     return_dict = {}
     for key, value in photo_info.items():
         return_dict[key] = value
-    # Retrieve user document from Firestore
-    doc_ref = dbs.collection(u'photos').document(photo_id)
-    doc = doc_ref.get()
 
-    return return_dict.items()
+    return return_dict
 
-    if doc.exists:
-        return doc.to_dict()
-    else:
-        return {"message": "User not found"}
     
 @router.post("/ground")
 async def create_ground(ground: dict):
